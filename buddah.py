@@ -52,8 +52,8 @@ def searchForReposts():
     print("Receiving posts...")
     for post in stream:
         i+=1
-        if not url.contains("www.reddit.com/r/"):
-            url = post.url.replace("https", "http")
+        url = post.url.replace("https", "http")
+        if not "www.reddit.com/r/" in url:
             print(url)
             results = find(url, fetch_praw=True)
             posts = []
