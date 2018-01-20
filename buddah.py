@@ -52,25 +52,26 @@ def searchForReposts():
     print("Receiving posts...")
     for post in stream:
         i+=1
-        url = post.url.replace("https", "http")
-        print(url)
-        results = find(url, fetch_praw=True)
-        posts = []
-        if results.original is not None:
-            for e in results:
-                posts.append(e)
-            
-            if len(posts > 0 and posts[0].score >= 250):
-                posts = quickSort(posts)
-                top_post = posts[0]
-                coms = top_post.comments
-                for e in coms:
-                    top_com = e
-                    break
-                if e is not None:
-                    text = top_com
-                    post.reply(text)
-                    print("Replied: \n"+text+"\nTo post:\n"+getPostUrl(post))
+        if not url.contains("www.reddit.com/r/"):
+            url = post.url.replace("https", "http")
+            print(url)
+            results = find(url, fetch_praw=True)
+            posts = []
+            if results.original is not None:
+                for e in results:
+                    posts.append(e)
+                
+                if len(posts > 0 and posts[0].score >= 250):
+                    posts = quickSort(posts)
+                    top_post = posts[0]
+                    coms = top_post.comments
+                    for e in coms:
+                        top_com = e
+                        break
+                    if e is not None:
+                        text = top_com
+                        post.reply(text)
+                        print("Replied: \n"+text+"\nTo post:\n"+getPostUrl(post))
 
 
 
