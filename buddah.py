@@ -1,4 +1,5 @@
 import praw
+import time
 from pykarma import find
 
 file = open("buddah/conf/userdata.txt")
@@ -49,7 +50,7 @@ def searchForReposts():
                     for e in results:
                         posts.append(e)
                 except AttributeError:
-                    1 
+                    pass
                 else:
                     print(str(len(posts))+" matching posts !")
                     if (len(posts) > 0 and posts[0].score >= minimum_karma):
@@ -79,13 +80,30 @@ def searchForReposts():
                         m.reply("Sucessfully stoped!")
                         print("Recieved STOP instruction from "+m.author.name)
                         stream.close()
-                        return true
+                        return True
             except AttributeError:
                 print("No new messages")
             except StopIteration:
                 print("End of new messages")
 
-
+def idle():
+    while True:
+        messages = reddit.inbox.unread()
+        try:
+            for m in messages:
+                print(m.author.name, m.body)
+                if(m.author.name in admins and m.body=="START"):
+                    m.mark_read()
+                    m.reply("Starting")
+                    print("Recieved START instruction from "+m.author.name)
+                    stream.close()
+                    return True
+        except AttributeError:
+            print("No new messages")
+        except StopIteration:
+            print("End of new messages")
+        time.sleep(60)
+        
 
 def quickSort(lst):
     n=len(lst)
@@ -117,3 +135,5 @@ def containsFilter(string):
 
 def postedInFilteredSub(post):
     return post.subreddit.display_name in subs
+
+idle()
