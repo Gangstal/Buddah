@@ -96,7 +96,6 @@ def idle():
                     m.mark_read()
                     m.reply("Starting")
                     print("Recieved START instruction from "+m.author.name)
-                    stream.close()
                     return True
         except AttributeError:
             print("No new messages")
