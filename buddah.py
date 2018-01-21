@@ -33,7 +33,6 @@ else:
     subreddits = reddit.subreddit(subs)
     
 def searchForReposts():
-    stop = False
     print("Creating stream...")
     stream = subreddits.stream.submissions()
     i=0
@@ -61,7 +60,7 @@ def searchForReposts():
                             if e.body not in ["[deleted]", "[removed]"] and not e.stickied:
                                 top_com = e
                                 break
-                        if e is not None:
+                        if top_com is not None:
                             text = top_com.body
                             post.reply(text)
                             post.upvote()
@@ -79,15 +78,13 @@ def searchForReposts():
                         m.mark_read()
                         m.reply("Sucessfully stoped!")
                         print("Recieved STOP instruction from "+m.author.name)
-                        stop = True
+                        stream.close()
+                        return true
             except AttributeError:
                 print("No new messages")
             except StopIteration:
                 print("End of new messages")
 
-            if(stop):
-                stream.close()
-                break
 
 
 def quickSort(lst):
