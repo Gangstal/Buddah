@@ -15,40 +15,25 @@ subs = file.read().replace("\n","+")
 file = open("buddah/conf/filters.txt")
 filters = file.read().split("\n")
 
+file = open("buddah/conf/config.txt")
+data = file.read().split("\n")
+
+minimum_karma = int(data[0])
+sublist_acts_as_filter = data[1]=="True"
+
+file = open("buddah/conf/admins.txt")
+admins = file.read().split("\n")
 
 reddit = praw.Reddit(user_agent='Comment Extraction (by /u/)'+name,
                      client_id=cid, client_secret=secret,
                      username=name, password=pwd)
-
-subreddits = reddit.subreddit("all")
-
-
-def getPosts(n=0):
-    print("Creating stream...")
-    stream = subreddits.stream.submissions()
-    posts = []
-    i = 0
-    print("Receiving posts...")
-    for post in stream:
-        if i==n:
-            break
-        i+=1
-        posts.append(post)
-
-    stream.close()
-    return posts
-
-def filterPosts(posts):
-    for post in posts:
-        if not (post.url.endswith("jpg") or post.url.endswith("png")):
-            posts.remove(post)
-    return posts
-
-def fetchPosts(n=10):
-        posts = filterPosts(getPosts(n))
-        return posts
+if(sublist_acts_as_filter):
+    subreddits = reddit.subreddit("all")
+else:
+    subreddits = reddit.subreddit(subs)
     
 def searchForReposts():
+    stop = False
     print("Creating stream...")
     stream = subreddits.stream.submissions()
     i=0
@@ -56,30 +41,53 @@ def searchForReposts():
     for post in stream:
         i+=1
         url = post.url.replace("https", "http")
-        if containsFilter(url):
-            print("["+str(i)+"]"+url)
-            results = find(url, fetch_praw=True)
-            posts = []
+        if (not sublist_acts_as_filter or not postedInFilteredSub(post)):
+            if containsFilter(url):
+                print("["+str(i)+"]"+url)
+                results = find(url, fetch_praw=True)
+                posts = []
+                try:
+                    for e in results:
+                        posts.append(e)
+                except AttributeError:
+                    1 
+                else:
+                    print(str(len(posts))+" matching posts !")
+                    if (len(posts) > 0 and posts[0].score >= minimum_karma):
+                        posts = quickSort(posts)
+                        top_post = posts[0]
+                        coms = top_post.comments
+                        for e in coms:
+                            if e.body not in ["[deleted]", "[removed]"]:
+                                top_com = e
+                                break
+                        if e is not None:
+                            text = top_com.body
+                            post.reply(text)
+                            post.upvote()
+                            print("Replied: \n"+text+"\nTo post:\n"+getPostUrl(post)+"\nFrom post"+getPostUrl(top_post))
+
+                    else:
+                        print("Best score ("+str(posts[0].score)+") is lesser the required ("+str(minimum_karma)+")")
+            
+        if(i%20==0):
+            print("Checking for new messages...")
+            messages = reddit.inbox.unread()
             try:
-                for e in results:
-                    posts.append(e)
+                for m in messages:
+                    print(m.author.name)
+                    print(m.body)
+                    if(m.author.name in admins and m.body=="STOP"):
+                        m.mark_read()
+                        stop = True
             except AttributeError:
-                1 
-            else:
-                print(len(posts))
-                if (len(posts) > 0 and posts[0].score >= 250):
-                    posts = quickSort(posts)
-                    top_post = posts[0]
-                    coms = top_post.comments
-                    for e in coms:
-                        top_com = e
-                        break
-                    if e is not None:
-                        text = top_com.body
-                        post.reply(text)
-                        print("Replied: \n"+text+"\nTo post:\n"+getPostUrl(post))
+                print("No new messages")
+            except StopIteration:
+                print("End of new messages")
 
-
+            if(stop):
+                stream.close()
+                break
 
 
 def quickSort(lst):
@@ -109,3 +117,6 @@ def containsFilter(string):
         if f in string:
             return True
     return False
+
+def postedInFilteredSub(post):
+    return post.subreddit.display_name in subs
