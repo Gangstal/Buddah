@@ -12,12 +12,15 @@ secret = data[3]
 file = open("buddah/conf/sublist.txt")
 subs = file.read().replace("\n","+")
 
+file = open("buddah/conf/filters.txt")
+filters = file.read().split("\n")
+
 
 reddit = praw.Reddit(user_agent='Comment Extraction (by /u/)'+name,
                      client_id=cid, client_secret=secret,
                      username=name, password=pwd)
 
-subreddits = reddit.subreddit(subs)
+subreddits = reddit.subreddit("all")
 
 
 def getPosts(n=0):
@@ -53,15 +56,18 @@ def searchForReposts():
     for post in stream:
         i+=1
         url = post.url.replace("https", "http")
-        if not "www.reddit.com/r/" in url:
-            print(url)
+        if containsFilter(url):
+            print("["+str(i)+"]"+url)
             results = find(url, fetch_praw=True)
             posts = []
-            if results.original is not None:
+            try:
                 for e in results:
                     posts.append(e)
-                
-                if len(posts > 0 and posts[0].score >= 250):
+            except AttributeError:
+                1 
+            else:
+                print(len(posts))
+                if (len(posts) > 0 and posts[0].score >= 250):
                     posts = quickSort(posts)
                     top_post = posts[0]
                     coms = top_post.comments
@@ -69,9 +75,10 @@ def searchForReposts():
                         top_com = e
                         break
                     if e is not None:
-                        text = top_com
+                        text = top_com.body
                         post.reply(text)
                         print("Replied: \n"+text+"\nTo post:\n"+getPostUrl(post))
+
 
 
 
@@ -95,4 +102,10 @@ def split(lst):
     return Li, x, Ls
 
 def getPostUrl(post):
-    return "https://www.reddit.com/r/"+post.subreddit+"/comments/"+post.id
+    return "https://www.reddit.com/r/"+post.subreddit.display_name+"/comments/"+post.id
+
+def containsFilter(string):
+    for f in filters:
+        if f in string:
+            return True
+    return False
