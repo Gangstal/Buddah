@@ -58,19 +58,19 @@ def searchForReposts():
                         top_post = posts[0]
                         coms = top_post.comments
                         for e in coms:
-                            if e.body not in ["[deleted]", "[removed]"]:
+                            if e.body not in ["[deleted]", "[removed]"] and not e.stickied:
                                 top_com = e
                                 break
                         if e is not None:
                             text = top_com.body
                             post.reply(text)
                             post.upvote()
-                            print("Replied: \n"+text+"\nTo post:\n"+getPostUrl(post)+"\nFrom post"+getPostUrl(top_post))
+                            print("Replied: \n"+text+"\nTo post:\n"+getPostUrl(post)+"\nFrom post:\n"+getPostUrl(top_post))
 
                     else:
-                        print("Best score ("+str(posts[0].score)+") is lesser the required ("+str(minimum_karma)+")")
+                        print("Best score ("+str(posts[0].score)+") is lesser than required ("+str(minimum_karma)+")")
             
-        if(i%100==0):
+        if(i%50==0):
             print("Checking for new messages...")
             messages = reddit.inbox.unread()
             try:
