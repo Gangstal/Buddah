@@ -70,15 +70,15 @@ def searchForReposts():
                     else:
                         print("Best score ("+str(posts[0].score)+") is lesser the required ("+str(minimum_karma)+")")
             
-        if(i%20==0):
+        if(i%100==0):
             print("Checking for new messages...")
             messages = reddit.inbox.unread()
             try:
                 for m in messages:
-                    print(m.author.name)
-                    print(m.body)
                     if(m.author.name in admins and m.body=="STOP"):
                         m.mark_read()
+                        m.reply("Sucessfully stoped!")
+                        print("Recieved STOP instruction from "+m.author.name)
                         stop = True
             except AttributeError:
                 print("No new messages")
